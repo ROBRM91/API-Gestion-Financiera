@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conexión a Base de Datos - iPlanner</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --light-text: #7f8c8d;
+            --border-color: #ddd;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7f9 0%, #e8ecf1 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .form-container {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--dark-text);
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        
+        .form-group input:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-alternative {
+            background: var(--accent-color);
+            margin-top: 10px;
+        }
+        
+        .btn-alternative:hover {
+            background: #219653;
+        }
+        
+        .status-message {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: var(--danger-color);
+            border: 1px solid #ffcdd2;
+        }
+        
+        .success {
+            background: #e8f5e9;
+            color: var(--accent-color);
+            border: 1px solid #c8e6c9;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .troubleshoot-list {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+        
+        .troubleshoot-list li {
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .toggle-troubleshoot {
+            color: var(--secondary-color);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .troubleshoot-content {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-database"></i> Conectar a MySQL</h1>
+            <p>Ingresa los datos de conexión a tu base de datos</p>
+        </div>
+        
+        <div class="form-container">
+            <div class="info-box">
+                <h3><i class="fas fa-info-circle"></i> Problema de conexión detectado</h3>
+                <p>Estás experimentando un error 405 al intentar conectarte a Railway.</p>
+                
+                <span class="toggle-troubleshoot" id="toggleTroubleshoot">Ver soluciones</span>
+                
+                <div class="troubleshoot-content" id="troubleshootContent">
+                    <p>Posibles causas y soluciones:</p>
+                    <ul class="troubleshoot-list">
+                        <li>Railway podría estar bloqueando solicitudes POST desde el cliente</li>
+                        <li>Intenta usar el método GET en lugar de POST</li>
+                        <li>Verifica que tu aplicación en Railway esté configurada para aceptar solicitudes desde tu dominio</li>
+                        <li>Prueba con la conexión directa a la base de datos usando los datos proporcionados</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <form id="connectionForm">
+                <div class="form-group">
+                    <label for="server_name">Nombre Servidor:</label>
+                    <input type="text" id="server_name" name="server_name" value="hopper.proxy.rlwy.net" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="server_port">Puerto:</label>
+                    <input type="text" id="server_port" name="server_port" value="48142" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user_name">Nombre Usuario:</label>
+                    <input type="text" id="user_name" name="user_name" value="root" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña:</label>
+                    <input type="password" id="password" name="password" value="bAXbctkLKIfxpHxwyrLfSNzbjEjhiovY" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="db_name">Nombre Base de Datos:</label>
+                    <input type="text" id="db_name" name="db_name" value="railway" required>
+                </div>
+
+                <button type="submit" class="btn"><i class="fas fa-plug"></i> CONECTAR (POST)</button>
+            </form>
+            
+            <button type="button" class="btn btn-alternative" id="testConnectionBtn">
+                <i class="fas fa-bolt"></i> PROBAR CONEXIÓN DIRECTA
+            </button>
+            
+            <div class="status-message" id="statusMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const connectionForm = document.getElementById('connectionForm');
+            const testConnectionBtn = document.getElementById('testConnectionBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            const toggleTroubleshoot = document.getElementById('toggleTroubleshoot');
+            const troubleshootContent = document.getElementById('troubleshootContent');
+            
+            // Toggle troubleshooting info
+            toggleTroubleshoot.addEventListener('click', function() {
+                if (troubleshootContent.style.display === 'block') {
+                    troubleshootContent.style.display = 'none';
+                    toggleTroubleshoot.textContent = 'Ver soluciones';
+                } else {
+                    troubleshootContent.style.display = 'block';
+                    toggleTroubleshoot.textContent = 'Ocultar soluciones';
+                }
+            });
+            
+            // Test connection directly using JavaScript
+            testConnectionBtn.addEventListener('click', function() {
+                const formData = {
+                    server_name: document.getElementById('server_name').value,
+                    server_port: document.getElementById('server_port').value,
+                    user_name: document.getElementById('user_name').value,
+                    password: document.getElementById('password').value,
+                    db_name: document.getElementById('db_name').value
+                };
+                
+                statusMessage.textContent = "Probando conexión...";
+                statusMessage.className = "status-message";
+                statusMessage.style.display = "block";
+                
+                // Try to connect directly using the provided credentials
+                testDatabaseConnection(formData);
+            });
+            
+            // Handle form submission
+            connectionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                statusMessage.textContent = "Conectando...";
+                statusMessage.className = "status-message";
+                statusMessage.style.display = "block";
+                
+                // Use the original PHP method
+                this.submit();
+            });
+            
+            // Function to test database connection directly from JavaScript
+            function testDatabaseConnection(connectionData) {
+                // This is a simplified version - in a real scenario, you would need
+                // to use a server-side endpoint to test the connection
+                
+                statusMessage.textContent = "Conectando directamente a la base de datos...";
+                
+                // Simulate connection testing (this would need server-side implementation)
+                setTimeout(() => {
+                    // This is just a simulation - in reality, you can't connect to MySQL
+                    // directly from client-side JavaScript for security reasons
+                    
+                    statusMessage.textContent = "Error: No es posible conectar directamente desde el navegador por razones de seguridad. Usa el método POST o configura un endpoint seguro en el servidor.";
+                    statusMessage.className = "status-message error";
+                    
+                    // Alternative suggestion
+                    setTimeout(() => {
+                        statusMessage.innerHTML += "<br><br>Como alternativa, puedes intentar: <br>1. Usar XAMPP localmente<br>2. Configurar CORS en Railway<br>3. Usar un endpoint API seguro para la conexión";
+                    }, 2000);
+                }, 1500);
+            }
+            
+            // Check if there's an error message in the URL (from redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            
+            if (error) {
+                statusMessage.textContent = decodeURIComponent(error);
+                statusMessage.className = "status-message error";
+                statusMessage.style.display = "block";
+            }
+        });
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
